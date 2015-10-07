@@ -181,7 +181,7 @@ level=[
 	"-----------------------------G"]
 platform_colour = (100,100,100)
 goal_colour = (0,0,255)
-asurf = pygame.image.load('down_arrow.png')
+asurf = pygame.image.load('../docs/images/down_arrow.png')
 asurf = pygame.transform.scale(asurf, (30, 50))
 
 
