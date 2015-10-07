@@ -1,2 +1,4 @@
 # Python
-Assorted python projects
+Assorted python projects while learning python
+
+Eoghan Maxwell, Ireland
