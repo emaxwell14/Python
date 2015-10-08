@@ -51,7 +51,7 @@ class World():
             if block.colliderect(player_rect):
                 return_y = block.y - block.height + 1
         return return_y
-    # Unused    
+ 
     def at_goal(self, player_rect):
         '''return true if the player is currently in contact with the goal. False otherwise'''
         for block in self.goals:
@@ -74,6 +74,7 @@ class World():
                 return_y = True
         return return_y
 
+
 class Aimer(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -87,8 +88,9 @@ class Aimer(pygame.sprite.Sprite):
         # TODO Place centre on ball, not centre of image
         rect = rotimage.get_rect(center=(ball_x, ball_y))
         screen.blit(rotimage,rect) 
-
+    # Not used. set in rotate method
     def setposition(self, x_coord, y_coord):
+        print("in set pos")
         self.rect.x = x_coord
         self.rect.y = y_coord
 
@@ -100,7 +102,7 @@ END CLASSES
 
 # Util Methods
 
-# Unused
+# Unused - old
 def getmaxdistance(power, angle_radians):
     a = math.pow (power, 2)
     b = math.sin(2 * angle_radians)
@@ -108,6 +110,8 @@ def getmaxdistance(power, angle_radians):
     
     return (a * b) / c
 
+''' Gets maximum distance ball can travel. THis is used to see how far the
+    ball has travelled on each iteration. The start_height is not used yet '''
 def getmaxdistance_variableheight(power, angle_radians):
     a = power * math.cos(angle_radians)
     b = power * math.sin(angle_radians)
@@ -115,8 +119,9 @@ def getmaxdistance_variableheight(power, angle_radians):
 
     return (a / accel_gravity) * (b + math.sqrt(math.pow(b, 2) + c))
 
-
-def getposition(x_coord, angle_radians, power):
+''' Based on the ball's x value and the angle and power of the hit,
+    the y value is attained '''
+def get_ball_height(x_coord, angle_radians, power):
     a = x_coord * math.tan(angle_radians)
     b = accel_gravity * math.pow(x_coord, 2)
     c = 2 * math.pow(power * math.cos(angle_radians), 2)
@@ -125,6 +130,7 @@ def getposition(x_coord, angle_radians, power):
     
 
 # OPTIONS
+# World optionss
 level=[
 	"                              ",
 	"                              ",
@@ -149,7 +155,7 @@ asurf = pygame.image.load('../docs/images/down_arrow.png')
 asurf = pygame.transform.scale(asurf, (30, 50))
 
 
-# Init game
+# Game options
 pygame.init()
 screen_size_x = 1000
 screen_size_y = 500
@@ -157,76 +163,99 @@ screen_size_y = 500
 window = pygame.display.set_mode((screen_size_x,screen_size_y))
 screen = pygame.display.get_surface()
 
-# Init distances
-offset_x = 50
-offset_y = 450
-power = 70
-angle = 80
+# Maths options
 intervals = 200
 accel_gravity = 9.807
-angle_radians = math.radians(angle)
-start_height = 0
 
-max_distance = getmaxdistance_variableheight(power, angle_radians)
-x_interval = max_distance / intervals
+interval_multiplier = 1
+
+#need to refactor to remove these
+start_height = 0
+current_x = 0
+offset_y = 450
+
+#power = 70
+#angle = 80
+#angle_radians = math.radians(angle)
+
 
 # Init obects
 clock = pygame.time.Clock()
 ball = Ball()
 ball_plain = pygame.sprite.RenderPlain(ball)
-world = World(level, 30, platform_colour,goal_colour )
-
+world = World(level, 30, platform_colour,goal_colour)
 arrow = Aimer()
-arrow.setposition(offset_x, offset_y)
 
 aiming_mode = True
-interval_multiplier = 1
-
-# GAME LOOP
-while True:
-    # Init loop vars
+# GAME LOOP - Continues until ball hits goal block
+while not world.at_goal(ball.rect):
+    # Reset screen on every loop
     screen.fill((0,0,0))
-    
+
+    # Look for click events
     for event in pygame.event.get():
+        # User closes window
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            start = time.perf_counter()
-
-        if aiming_mode: 
-            if event.type == pygame.MOUSEBUTTONUP:
-                # Setting power based on time
+        
+        # If in aiming mode, check mouse clicks
+        if aiming_mode:
+            # Stopping timer on mouse up to measure power
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                start = time.perf_counter()
+            
+            # On mouse up, need to set up ball movement  
+            elif event.type == pygame.MOUSEBUTTONUP:
+                # Stopping timer on mouse up to measure power
                 end = time.perf_counter()
                 elapsed = end - start
                 power = elapsed * 200
  
                 #using absolute value to set angle of aimer
                 pos = pygame.mouse.get_pos()
-                angle = math.fabs(math.atan2(pos[1]-offset_y,pos[0]-offset_x)*180/math.pi)
+                angle = math.fabs(math.atan2(pos[1]-offset_y,pos[0]-current_x)*180/math.pi)
                 angle_radians = math.radians(angle)
 
                 # Stopping aiming arrow from showing
                 aiming_mode = False
 
                 # Resetting values for new shot
+                ball_rest_position = current_x
                 interval_multiplier = 1
+                max_distance = getmaxdistance_variableheight(power, angle_radians)
+                x_interval = max_distance / intervals
 
     # Set aimer position
     if aiming_mode:
-        arrow.rotate_with_mouse(offset_x, offset_y)
+        arrow.rotate_with_mouse(current_x, offset_y)
+        
 
     # Set ball position
     if not aiming_mode:
-        current_x = interval_multiplier * x_interval
-        current_y = offset_y - getposition(current_x, angle_radians, power)
+        # Current x is the previous ball position plus the interval by the multiplier
+        current_x = interval_multiplier * x_interval + ball_rest_position
+        # Current y is related to the place where the ball started on this hit rather than the overall screen
+        # So the ball rest position needs to be taken from the current x position. 
+        current_y = offset_y - get_ball_height(current_x - ball_rest_position, angle_radians, power)
 
+        # Increase interval to set next x value of ball
+        interval_multiplier = interval_multiplier + 1
+
+        # Set the position of the ball and draw it to the screen
         ball.setposition(current_x, current_y)
         ball_plain.draw(screen)
-        
+
+        # When ball hits surface, show arror again
         aiming_mode = world.ball_collided(ball.rect)
-        interval_multiplier = interval_multiplier + 1
         
+    # Update world and screen on each loop    
     world.update(screen)
     pygame.display.update()
+
+# Need to update this
+var = input("You Win. Enter any key to exit")
+if (var != "y"):
+    pygame.quit()
+    sys.exit()
 
