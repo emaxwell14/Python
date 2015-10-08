@@ -119,6 +119,8 @@ END CLASSES
 
 
 # Util Methods
+
+# Unused
 def getmaxdistance(power, angle_radians):
     a = math.pow (power, 2)
     b = math.sin(2 * angle_radians)
@@ -156,9 +158,7 @@ def check_collision (x_coord, y_coord):
         
     return False
 
-def update_screen():
-    world.update(screen)
-    pygame.display.update()
+    
 
 # OPTIONS
 level=[
@@ -204,69 +204,51 @@ world = World(level, 30, platform_colour,goal_colour )
 arrow = Aimer()
 arrow.setposition(offset_x, offset_y)
 
-
-current_y =  start_height
+aiming_mode = True
+interval_multiplier = 1
 
 # GAME LOOP
 while True:
     # Init loop vars
-    angle_selected = False
-    finished = False
-    interval_multiplier = 1
+    screen.fill((0,0,0))
     
     for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
+        if event.type == QUIT:
+            pygame.quit()
+            sys.exit()
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            start = time.perf_counter()
 
-    # ARROW LOOP
-    while not angle_selected:
-        #blank screen
-        # Need to blit instead of clearing entire screen
-        screen.fill((0,0,0))
-
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                start = time.perf_counter()
-            elif event.type == pygame.MOUSEBUTTONUP:
+        if aiming_mode: 
+            if event.type == pygame.MOUSEBUTTONUP:
                 # setting power and ending loop
                 end = time.perf_counter()
                 elapsed = end - start
                 power = elapsed * 200
                 print(power)
                 angle_selected = True
-                
+                aiming_mode = False
+                pos = pygame.mouse.get_pos()
+                #using absolute value to get angle
+                angle = math.fabs(math.atan2(pos[1]-offset_y,pos[0]-offset_x)*180/math.pi)
+                angle_radians = math.radians(angle)
+                interval_multiplier = 1
+
+    # Set aimer position
+    if aiming_mode:
         arrow.rotate_with_mouse(offset_x, offset_y)
-        world.update(screen)
-        pygame.display.update()
- 
-    # BALL LOOP
-    pos = pygame.mouse.get_pos()
-    # using absolute value to get angle
-    angle= math.fabs(math.atan2(pos[1]-offset_y,pos[0]-offset_x)*180/math.pi)
-    angle_radians = math.radians(angle)
 
-    while not finished:
-        screen.fill((0,0,0))
-
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
-                
+    # Set ball position
+    if not aiming_mode:
         current_x = interval_multiplier * x_interval
         current_y = offset_y - getposition(current_x, angle_radians, power)
 
         ball.setposition(current_x, current_y)
         ball_plain.draw(screen)
-        world.update(screen)
-
-        finished = world.ball_collided(ball.rect)
+        
+        aiming_mode = world.ball_collided(ball.rect)
         interval_multiplier = interval_multiplier + 1
-        pygame.display.update()
-
- 
+        
+    world.update(screen)
+    pygame.display.update()
 
