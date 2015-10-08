@@ -1,28 +1,8 @@
 import pygame, math, sys, time
 from pygame.locals import *
 
-# Maths vars
-power = 70
-angle = 80
-start_height = 0
-min_y_coord = -70
-
-
-# Init vars
-screen_size_x = 1000
-screen_size_y = 500
-offset_x = 50
-offset_y = 450
-
-# Constants
-intervals = 200
-accel_gravity = 9.807
-angle_radians = math.radians(angle)
-
 '''
-
 CLASSES
-
 '''
 
 class Ball(pygame.sprite.Sprite):
@@ -58,12 +38,12 @@ class World():
                     self.goals.append(pygame.Rect(self.posn_x, self.posn_y, block_size, block_size))
                 self.posn_x = self.posn_x + block_size
             self.posn_y = self.posn_y + block_size
-            
+    # Unused       
     def move(self, dist):
         '''move the world dist pixels right (a negative dist means left)'''
         for block in self.platforms + self.goals:
             block.move_ip(dist,0)
-
+    # Unused
     def collided_get_y(self, player_rect):
         '''get the y value of the platform the player is currently on'''
         return_y = -1
@@ -71,14 +51,14 @@ class World():
             if block.colliderect(player_rect):
                 return_y = block.y - block.height + 1
         return return_y
-        
+    # Unused    
     def at_goal(self, player_rect):
         '''return true if the player is currently in contact with the goal. False otherwise'''
         for block in self.goals:
             if block.colliderect(player_rect):
                 return True
         return False
-
+    # Unused
     def update(self, screen):
         '''draw all the rectangles onto the screen'''
         for block in self.platforms:
@@ -140,24 +120,8 @@ def getposition(x_coord, angle_radians, power):
     a = x_coord * math.tan(angle_radians)
     b = accel_gravity * math.pow(x_coord, 2)
     c = 2 * math.pow(power * math.cos(angle_radians), 2)
-    '''
-    print ("abc")
-    print (a)
-    print (b)
-    print (c)
-    '''
     
     return start_height + a - (b / c)
-
-
-def check_collision (x_coord, y_coord):
-
-    if (y_coord < min_y_coord):
-        print ("setting col 2")
-        return True
-        
-    return False
-
     
 
 # OPTIONS
@@ -187,15 +151,26 @@ asurf = pygame.transform.scale(asurf, (30, 50))
 
 # Init game
 pygame.init()
+screen_size_x = 1000
+screen_size_y = 500
+
 window = pygame.display.set_mode((screen_size_x,screen_size_y))
 screen = pygame.display.get_surface()
 
 # Init distances
+offset_x = 50
+offset_y = 450
+power = 70
+angle = 80
+intervals = 200
+accel_gravity = 9.807
+angle_radians = math.radians(angle)
+start_height = 0
+
 max_distance = getmaxdistance_variableheight(power, angle_radians)
 x_interval = max_distance / intervals
 
-
-# Init obects 
+# Init obects
 clock = pygame.time.Clock()
 ball = Ball()
 ball_plain = pygame.sprite.RenderPlain(ball)
@@ -221,17 +196,20 @@ while True:
 
         if aiming_mode: 
             if event.type == pygame.MOUSEBUTTONUP:
-                # setting power and ending loop
+                # Setting power based on time
                 end = time.perf_counter()
                 elapsed = end - start
                 power = elapsed * 200
-                print(power)
-                angle_selected = True
-                aiming_mode = False
+ 
+                #using absolute value to set angle of aimer
                 pos = pygame.mouse.get_pos()
-                #using absolute value to get angle
                 angle = math.fabs(math.atan2(pos[1]-offset_y,pos[0]-offset_x)*180/math.pi)
                 angle_radians = math.radians(angle)
+
+                # Stopping aiming arrow from showing
+                aiming_mode = False
+
+                # Resetting values for new shot
                 interval_multiplier = 1
 
     # Set aimer position
