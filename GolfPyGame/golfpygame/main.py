@@ -8,9 +8,12 @@ CLASSES
 class Ball(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface([5, 5])
-        self.image.fill((255,0,0))
-        self.rect = self.image.get_rect()
+       #self.image = pygame.Surface([5, 5])
+       #self.image.fill((255,0,0))
+        self.image = ball_image
+       #self.rect = self.image.get_rect()
+        self.rect = pygame.rect.Rect((0, 0), (8, 8))
+       
 
     def setposition(self, x_coord, y_coord):
         self.rect.x = x_coord
@@ -71,6 +74,7 @@ class World():
         return_y = False
         for block in self.platforms:
             if block.colliderect(ball_rect):
+                print("collision")
                 return_y = True
         return return_y
 
@@ -153,6 +157,9 @@ platform_colour = (100,100,100)
 goal_colour = (0,0,255)
 asurf = pygame.image.load('../docs/images/down_arrow.png')
 asurf = pygame.transform.scale(asurf, (30, 50))
+ball_image = pygame.image.load('../docs/images/golfball.jpg')
+ball_image = pygame.transform.scale(ball_image, (5, 5))
+
 
 
 # Game options
@@ -172,6 +179,7 @@ interval_multiplier = 1
 #need to refactor to remove these
 start_height = 0
 current_x = 0
+current_y = 0
 offset_y = 450
 
 #power = 70
@@ -242,14 +250,14 @@ while not world.at_goal(ball.rect):
         # Increase interval to set next x value of ball
         interval_multiplier = interval_multiplier + 1
 
-        # Set the position of the ball and draw it to the screen
-        ball.setposition(current_x, current_y)
-        ball_plain.draw(screen)
+        
 
         # When ball hits surface, show arror again
         aiming_mode = world.ball_collided(ball.rect)
         
     # Update world and screen on each loop    
+    ball.setposition(current_x, current_y)
+    ball_plain.draw(screen)
     world.update(screen)
     pygame.display.update()
 
