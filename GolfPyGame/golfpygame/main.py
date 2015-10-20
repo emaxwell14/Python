@@ -251,9 +251,10 @@ while not world.at_goal(ball.rect):
         interval_multiplier = interval_multiplier + 1
 
         
-
-        # When ball hits surface, show arror again
-        aiming_mode = world.ball_collided(ball.rect)
+        # When ball hits surface, show arrow again. Only check after a couple of intervals
+        # as ball was getting stuck to ground
+        if interval_multiplier > 5:
+            aiming_mode = world.ball_collided(ball.rect)
         
     # Update world and screen on each loop    
     ball.setposition(current_x, current_y)
@@ -261,7 +262,7 @@ while not world.at_goal(ball.rect):
     world.update(screen)
     pygame.display.update()
 
-# Need to update this
+# TODO Need to update this
 var = input("You Win. Enter any key to exit")
 if (var != "y"):
     pygame.quit()
