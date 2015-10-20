@@ -104,7 +104,10 @@ END CLASSES
 '''
 
 
-# Util Methods
+'''
+Util Methods
+'''
+
 
 # Unused - old
 def getmaxdistance(power, angle_radians):
@@ -115,7 +118,7 @@ def getmaxdistance(power, angle_radians):
     return (a * b) / c
 
 ''' Gets maximum distance ball can travel. THis is used to see how far the
-    ball has travelled on each iteration. The start_height is not used yet '''
+    ball has travelled on each iteration. The start_height is not used yet, also effects flight time '''
 def getmaxdistance_variableheight(power, angle_radians):
     a = power * math.cos(angle_radians)
     b = power * math.sin(angle_radians)
@@ -131,7 +134,21 @@ def get_ball_height(x_coord, angle_radians, power):
     c = 2 * math.pow(power * math.cos(angle_radians), 2)
     
     return start_height + a - (b / c)
-    
+
+
+''' height not used yet in either method '''
+# Not Used
+def get_ball_flight_time(power, angle_radians):
+    a = power * math.sin(angle_radians)
+    b = math.sqrt(math.pow(a, 2) + (2 * accel_gravity * start_height))
+    flight_time = ((a + b) / accel_gravity)
+    return flight_time
+
+''' Flight time based on distance, which is calculated before'''
+def get_flight_time (distance, power, angle_radians):
+    flight_time = distance / (power * math.cos(angle_radians))
+    return flight_time
+   
 
 # OPTIONS
 # World optionss
@@ -229,17 +246,26 @@ while not world.at_goal(ball.rect):
                 aiming_mode = False
 
                 # Resetting values for new shot
+                # Used to offset current_x value while ball is moving
                 ball_rest_position = current_x
                 interval_multiplier = 1
+
+                # Getting the max distance the ball will travel
                 max_distance = getmaxdistance_variableheight(power, angle_radians)
+                # Setting the distance the ball will move in the x-axis on each loop
                 x_interval = max_distance / intervals
 
-    # Set aimer position
+                # Getting the time the balls flight will take. Used to prolong the flight
+                # Without this, the ball doesnt appear to fly correctly. It went too fast
+                # for a high trajectory and too slow for a low one
+                flight_time = int(get_flight_time(max_distance, power, angle_radians))
+
+    # Set aimer position in aiming mode
     if aiming_mode:
         arrow.rotate_with_mouse(current_x, offset_y)
         
 
-    # Set ball position
+    # Set ball position when ball is in flight
     if not aiming_mode:
         # Current x is the previous ball position plus the interval by the multiplier
         current_x = interval_multiplier * x_interval + ball_rest_position
@@ -250,12 +276,14 @@ while not world.at_goal(ball.rect):
         # Increase interval to set next x value of ball
         interval_multiplier = interval_multiplier + 1
 
-        
         # When ball hits surface, show arrow again. Only check after a couple of intervals
         # as ball was getting stuck to ground
         if interval_multiplier > 5:
             aiming_mode = world.ball_collided(ball.rect)
-        
+
+    # Slowing the game down based on the flight time        
+    pygame.time.delay(flight_time)
+    
     # Update world and screen on each loop    
     ball.setposition(current_x, current_y)
     ball_plain.draw(screen)
