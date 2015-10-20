@@ -211,6 +211,7 @@ ball_plain = pygame.sprite.RenderPlain(ball)
 world = World(level, 30, platform_colour,goal_colour)
 arrow = Aimer()
 
+flight_time = 0
 aiming_mode = True
 # GAME LOOP - Continues until ball hits goal block
 while not world.at_goal(ball.rect):
